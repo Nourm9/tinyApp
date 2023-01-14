@@ -19,18 +19,17 @@
       </div>
     </div>
     <div>
-        <% if (username) { %>
-        <h3>Logged in:<%= username %></h3>
-        <% } else { %>
-        <form method="post" action="/login">
-          <label for="username">Login:</label>
-          <input type="text" name="username" id="username" placeholder="Username" />
-        </form>
-        <% } %>
-    </div>
-    <form method="post" action="/logout">
+        <% if (user) { %>
+        <h3>Logged in:<%= user %></h3>
+         <form method="post" action="/logout">
       <button >Logout</button>
     </form>
     
+        <% } else { %>
+        <a href="/login">Login</a>
+        <a href="/registration">Sign-Up</a>
+        <% } %>
+    </div>
+   
   </nav>
 </header>
