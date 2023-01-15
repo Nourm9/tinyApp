@@ -27,8 +27,14 @@ const getUserByEmail = function (email, database) {
 };
 
 const urlDatabase = {
-  b2xVn2: "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
@@ -133,6 +139,7 @@ app.post("/registration", (req, res) => {
 //  and urls /:id
 app.get("/urls", (req, res) => {
   const user_id = req.cookies["user_id"];
+
   if (user_id) {
     const templateVars = { user: users[user_id], urls: urlDatabase };
     res.render("urls_index", templateVars);
@@ -151,7 +158,7 @@ app.post("/urls", (req, res) => {
   const id = generateRandomString();
   const user_id = req.session.user_id;
   const user = getUserById(user_id, users);
-  longURL = urlDatabase[req.params.id];
+  longURL = urlDatabase[req.params.id].longURL;
 
   if (user_id) {
     return res.redirect(`/urls/${id}`);
@@ -180,12 +187,13 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   const user_id = req.cookies["user_id"];
-  const templateVars = {
+  
+  if (user_id) {
+    const templateVars = {
     user: user_id,
     id: req.params.id,
-    longURL: urlDatabase[req.params.id],
+    longURL: urlDatabase[req.params.id].longURL,
   };
-  if (user_id) {
     res.render("urls_show", templateVars);
   } else {
     res.sendStatus(401).send("please login in to use");
