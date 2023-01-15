@@ -50,27 +50,40 @@ const generateRandomID = () => {
   return id;
 };
 
-app.get("/", (req, res) => {
-  res.redirect("/urls");
-});
-
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
+});
+
+app.get("/", (req, res) => {
+  res.redirect("/urls");
 });
 
 //  Login and Logout post routes
 app.get("/login", (req, res) => {
   const user_id = req.cookies["user_id"];
   const templateVars = { user: user_id };
-  res.render("login",templateVars);
-})
+  res.render("login", templateVars);
+});
 app.post("/login", (req, res) => {
+  const { id, email, password } = req.body;
+  let currentUser = users[id];
   let user_id = generateRandomID();
-  res.cookie("user_id", user_id);
-  res.redirect("/urls");
+  let verifiedEmail = getUserByEmail(email,users);
+  let verifiedPassword = currentUser?.password === password;
+
+  if (verifiedEmail) {
+    res.cookie("user_id", user_id);
+    res.redirect("/urls");
+  } else if (!verifiedPassword) {
+    res.sendStatus(401).send("Password was incorrect");
+  } else {
+    res.sendStatus(403).send("Email cannot be found");
+  }
 });
 
 app.post("/logout", (req, res) => {
+  const { email, password } = req.body;
+
   res.clearCookie("user_id");
   res.redirect("/urls");
 });
@@ -85,20 +98,25 @@ app.get("/registration", (req, res) => {
 
 app.post("/registration", (req, res) => {
   const user_id = generateRandomID();
-  if (getUserByEmail(req.body.email, users) !== null) {
+  const { id, email, password } = req.body;
+  let currentUser = users[id];
+  let verifiedEmail = getUserByEmail(email, users);
+  let verifiedPassword = currentUser?.password === password;
+
+
+  if (verifiedEmail !== null) {
     res.sendStatus(400);
-  } else if (req.body.email === "" || req.body.password === "") {
-    res.sendStatus(400);
-  } else {
+  } else if (verifiedEmail === "" || verifiedPassword === "") {
+    res.sendStatus(401);
+  } else { 
     users[user_id] = {
       id: user_id,
-      email: req.body.email,
+      email: req.body.email, 
       password: req.body.password,
     };
     res.cookie("user_id", user_id);
     res.redirect("/urls");
   }
-
 });
 
 // get routes for /urls to view and change urls
