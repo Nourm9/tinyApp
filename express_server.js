@@ -60,30 +60,33 @@ app.get("/", (req, res) => {
 
 //  Login and Logout post routes
 app.get("/login", (req, res) => {
-  const user_id = req.cookies["user_id"];
-  const templateVars = { user: user_id };
-  res.render("login", templateVars);
+  if (req.cookies["user_id"]) {
+    const user_id = req.cookies["user_id"];
+
+    const templateVars = { user: user_id };
+    res.render("login", templateVars);
+  } else {
+    const templateVars = { user: null };
+    res.render("login", templateVars);
+  }
 });
 app.post("/login", (req, res) => {
   const { id, email, password } = req.body;
-  let currentUser = users[id];
   let user_id = generateRandomID();
-  let verifiedEmail = getUserByEmail(email,users);
-  let verifiedPassword = currentUser?.password === password;
+  let currentUser = getUserByEmail(email, users);
 
-  if (verifiedEmail) {
-    res.cookie("user_id", user_id);
-    res.redirect("/urls");
-  } else if (!verifiedPassword) {
+  if (!currentUser) {
+    res.sendStatus(403).send("Email cannot be found");
+  } else if (currentUser.password !== password) {
     res.sendStatus(401).send("Password was incorrect");
   } else {
-    res.sendStatus(403).send("Email cannot be found");
+    res.cookie("user_id", user_id);
+    res.redirect("/urls");
   }
 });
 
 app.post("/logout", (req, res) => {
   const { email, password } = req.body;
-
   res.clearCookie("user_id");
   res.redirect("/urls");
 });
@@ -99,19 +102,15 @@ app.get("/registration", (req, res) => {
 app.post("/registration", (req, res) => {
   const user_id = generateRandomID();
   const { id, email, password } = req.body;
-  let currentUser = users[id];
-  let verifiedEmail = getUserByEmail(email, users);
-  let verifiedPassword = currentUser?.password === password;
-
-
-  if (verifiedEmail !== null) {
-    res.sendStatus(400);
-  } else if (verifiedEmail === "" || verifiedPassword === "") {
+  let currentUser = getUserByEmail(email, users);
+  if (currentUser !== null) {
+    res.sendStatus(400).send("Email already exists.");
+  } else if (email === "" || password === "") {
     res.sendStatus(401);
-  } else { 
+  } else {
     users[user_id] = {
       id: user_id,
-      email: req.body.email, 
+      email: req.body.email,
       password: req.body.password,
     };
     res.cookie("user_id", user_id);
@@ -123,10 +122,7 @@ app.post("/registration", (req, res) => {
 //  and urls /:id
 app.get("/urls", (req, res) => {
   const user_id = req.cookies["user_id"];
-  if (req.cookies) {
-    username = req.cookies["username"];
-  }
-  const templateVars = { user: user_id, urls: urlDatabase };
+  const templateVars = { user: users[user_id], urls: urlDatabase };
   res.render("urls_index", templateVars);
 });
 

@@ -20,7 +20,7 @@
     </div>
     <div>
         <% if (user) { %>
-        <h3>Logged in:<%= user %></h3>
+        <h3 method="get" action="/login">Logged in:<%= user.email %></h3>
          <form method="post" action="/logout">
       <button >Logout</button>
     </form>
