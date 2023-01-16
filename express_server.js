@@ -25,48 +25,7 @@ app.use(
   })
 );
 
-const urlsForUser = function (id) {
-  const userURL = {};
 
-  for (let url in urlDatabase) {
-    if (urlDatabase[url].userID === id) {
-      userURL[url] = urlDatabase[url];
-    }
-  }
-
-  return userURL;
-};
-
-const getUserById = (id, userDB) => {
-  const userIds = Object.keys(userDB);
-  if (!id) {
-    return null;
-  }
-
-  for (let key of userIds) {
-    if (key === id) return userDB[key];
-  }
-};
-
-const getUserByEmail = function (email, database) {
-  for (let key in database) {
-    if (database[key].email === email) {
-      return database[key];
-    }
-  }
-  return null;
-};
-
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
 
 const users = {
   userRandomID: {
@@ -81,15 +40,13 @@ const users = {
   },
 };
 
-const generateRandomString = () => {
-  let shortUrl = Math.random().toString(30).slice(7);
-  return shortUrl;
-};
-
-const generateRandomID = () => {
-  let id = Math.random().toString(30).slice(7);
-  return id;
-};
+const {
+  urlsForUser,
+  getUserByEmail,
+  getUserById,
+  generateRandomID,
+  generateRandomString,
+} = require("./helpers");
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
@@ -125,9 +82,9 @@ app.post("/login", (req, res) => {
     user_id: {
       id: user_id,
       email,
-      password: bcrypt.hashSync(password, saltRounds)
-    }
-  }
+      password: bcrypt.hashSync(password, saltRounds),
+    },
+  };
 
   if (!currentUser) {
     res.sendStatus(403).send("Email cannot be found");
@@ -135,9 +92,9 @@ app.post("/login", (req, res) => {
     res.sendStatus(401).send("Password was incorrect");
   } else {
     let user_id = getUserById(currentUser.id, users);
-    users.user_id = userObj
+    users.user_id = userObj;
     req.session.user_id = user_id;
-    console.log("req.sess:", req.session.user_id)
+    console.log("req.sess:", req.session.user_id);
     res.redirect("/urls");
   }
 });
