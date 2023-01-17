@@ -1,3 +1,14 @@
+const urlDatabase = {
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
+};
+
 const urlsForUser = function (id) {
   const userURL = {};
   for (let url in urlDatabase) {
@@ -38,16 +49,9 @@ const generateRandomID = () => {
   return id;
 };
 
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "https://www.tsn.ca",
-    userID: "aJ48lW",
-  },
-  i3BoGr: {
-    longURL: "https://www.google.ca",
-    userID: "aJ48lW",
-  },
-};
+
+
+
 
 module.exports = {
   urlsForUser,
@@ -55,5 +59,6 @@ module.exports = {
   getUserById,
   generateRandomID,
   generateRandomString,
+  urlDatabase
 }
 

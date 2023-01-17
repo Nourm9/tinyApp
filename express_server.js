@@ -26,7 +26,6 @@ app.use(
 );
 
 
-
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -46,6 +45,7 @@ const {
   getUserById,
   generateRandomID,
   generateRandomString,
+  urlDatabase
 } = require("./helpers");
 
 app.listen(PORT, () => {
@@ -74,17 +74,7 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   let currentUser = getUserByEmail(email, users);
-  let user_id = getUserById(currentUser.id, users);
 
-  console.log("req.body password", password);
-
-  let userObj = {
-    user_id: {
-      id: user_id,
-      email,
-      password: bcrypt.hashSync(password, saltRounds),
-    },
-  };
 
   if (!currentUser) {
     res.sendStatus(403).send("Email cannot be found");
@@ -92,9 +82,16 @@ app.post("/login", (req, res) => {
     res.sendStatus(401).send("Password was incorrect");
   } else {
     let user_id = getUserById(currentUser.id, users);
+
+    let userObj = {
+      user_id: {
+        id: user_id,
+        email,
+        password: bcrypt.hashSync(password, saltRounds),
+      },
+    };
     users.user_id = userObj;
-    req.session.user_id = user_id;
-    console.log("req.sess:", req.session.user_id);
+    req.session.user_id = user_id.id;
     res.redirect("/urls");
   }
 });
@@ -144,8 +141,10 @@ app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
 
   if (user_id) {
-    const currentUserUrls = urlsForUser(user_id);
-    const templateVars = { user: users[user_id], urls: currentUserUrls };
+    const templateVars = {
+      user: users[req.session.user_id],
+      urls: urlsForUser(req.session.user_id)
+    };
     res.render("urls_index", templateVars);
   } else {
     res.redirect("/login");
@@ -155,14 +154,15 @@ app.get("/urls", (req, res) => {
 app.post("/urls", (req, res) => {
   const user_id = req.session.user_id;
   if (user_id) {
-    const id = generateRandomString();
-    urlDatabase[id] = {
-      longURL: req.body.longURL,
-      userID: user_id,
-    };
-    return res.redirect(`/urls/${id}`);
+    const shortURL = generateRandomString();
+    const longURL = req.body.longURL;
+    const user = req.session.user_id;
+    urlDatabase[shortURL] = { longURL, userID: user };
+    res.redirect(`/urls/${shortURL}`);
+  } else {
+   res.redirect("/login");
   }
-  return res.redirect("/login");
+  
 });
 
 app.get("/urls/new", (req, res) => {
@@ -191,7 +191,7 @@ app.get("/urls/:id", (req, res) => {
       shortURL: req.params.id,
       longURL: urlDatabase[req.params.id].longURL,
     };
-    console.log(req.params.id);
+
     res.render("urls_show", templateVars);
   } else {
     res.status(401).send("please login in to use");
