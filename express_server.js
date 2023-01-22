@@ -25,7 +25,6 @@ app.use(
   })
 );
 
-
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -45,12 +44,8 @@ const {
   getUserById,
   generateRandomID,
   generateRandomString,
-  urlDatabase
+  urlDatabase,
 } = require("./helpers");
-
-app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
-});
 
 app.get("/", (req, res) => {
   if (req.session.user_id) {
@@ -74,7 +69,6 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   let currentUser = getUserByEmail(email, users);
-
 
   if (!currentUser) {
     res.sendStatus(403).send("Email cannot be found");
@@ -101,19 +95,19 @@ app.post("/logout", (req, res) => {
   res.redirect("/login");
 });
 
-// registration route
-app.get("/registration", (req, res) => {
+// register route
+app.get("/register", (req, res) => {
   if (req.session.user_id) {
     const user_id = req.session.user_id;
     const templateVars = { user: user_id };
     res.redirect("/urls");
   } else {
     const templateVars = { user: null };
-    res.render("registration", templateVars);
+    res.render("register", templateVars);
   }
 });
 
-app.post("/registration", (req, res) => {
+app.post("/register", (req, res) => {
   const user_id = generateRandomID();
   let error = null;
   const { id, email, password } = req.body;
@@ -143,7 +137,7 @@ app.get("/urls", (req, res) => {
   if (user_id) {
     const templateVars = {
       user: users[req.session.user_id],
-      urls: urlsForUser(req.session.user_id)
+      urls: urlsForUser(req.session.user_id),
     };
     res.render("urls_index", templateVars);
   } else {
@@ -160,9 +154,8 @@ app.post("/urls", (req, res) => {
     urlDatabase[shortURL] = { longURL, userID: user };
     res.redirect(`/urls/${shortURL}`);
   } else {
-   res.redirect("/login");
+    res.status(401).send("Please login in to use tinyApp");
   }
-  
 });
 
 app.get("/urls/new", (req, res) => {
@@ -176,25 +169,30 @@ app.get("/urls/new", (req, res) => {
   if (user_id) {
     res.render("urls_new", templateVars);
   } else {
-    res.status(401).send("Please login to use tinyApp").redirect("/login");
+    res.redirect("/login");
   }
 });
 
+/** const id = "abc";
+ * urlsDatabase[id]  = urlDatabase["abc"];
+ * urlsDatabase
+ */
+
 app.get("/urls/:id", (req, res) => {
   const user_id = req.session.user_id;
-  const currentUserUrls = urlsForUser(user_id.id);
-
   if (user_id) {
+    if (urlDatabase[req.params.id].userID !== user_id) {
+      res.status(401).send("You don't have authorization to view this page.");
+    }
     const templateVars = {
       user: users[user_id],
       id: req.params.id,
       shortURL: req.params.id,
       longURL: urlDatabase[req.params.id].longURL,
     };
-
     res.render("urls_show", templateVars);
   } else {
-    res.status(401).send("please login in to use");
+    res.status(401).send("please login in to use tinyApp");
   }
 });
 
@@ -225,4 +223,19 @@ app.post("/urls/:id/delete", (req, res) => {
     res.status(401).send("please login to delete url");
     res.redirect("/login");
   }
+});
+
+app.get("/u/:id", (req, res) => {
+  if (urlDatabase[req.params.id]) {
+    const longURL = urlDatabase[req.params.id].longURL;
+    if (longURL === undefined) {
+      res.status(302);
+    }
+    res.redirect(longURL);
+  } else {
+    res.status(404).send("Your url could not be found.");
+  }
+});
+app.listen(PORT, () => {
+  console.log(`Example app listening on port ${PORT}!`);
 });
