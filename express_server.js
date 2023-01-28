@@ -239,7 +239,7 @@ app.get("/u/:id", (req, res) => {
     }
     res.redirect(longURL);
   } else {
-    res.status(404).send("Your url could not be found.");
+    res.status(404).send("Your url could not be found."); //if url for id doesn't exist. 
   }
 });
 app.listen(PORT, () => {
