@@ -1,3 +1,4 @@
+//Urls object that will hold our user urls. 
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -9,24 +10,26 @@ const urlDatabase = {
   },
 };
 
+// helper fuctions that will be 
 const urlsForUser = function (id) {
   const userURL = {};
   for (let url in urlDatabase) {
     if (urlDatabase[url].userID === id) {
-      userURL[url] = urlDatabase[url];
+      userURL[url] = urlDatabase[url]; 
     }
   }
   return userURL;
 };
 
+
 const getUserById = (id, userDB) => {
   const userIds = Object.keys(userDB);
   if (!id) {
-    return null;
+    return null; // returns null for our reference, rather than undefined.
   }
 
   for (let key of userIds) {
-    if (key === id) return userDB[key];
+    if (key === id) return userDB[key]; 
   }
 };
 
@@ -36,7 +39,7 @@ const getUserByEmail = function (email, database) {
       return database[key];
     }
   }
-  return null;
+  return null; // for if database[key].email !== email, null instead of undefined 
 };
 
 const generateRandomString = () => {
@@ -45,7 +48,7 @@ const generateRandomString = () => {
 };
 
 const generateRandomID = () => {
-  let id = Math.random().toString(30).slice(7);
+  let id = Math.random().toString(30).slice(7); 
   return id;
 };
 

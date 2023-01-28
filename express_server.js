@@ -47,6 +47,7 @@ const {
   urlDatabase,
 } = require("./helpers");
 
+//get function for main page. redirects to login page if user is not logged in.
 app.get("/", (req, res) => {
   if (req.session.user_id) {
     return res.redirect("/urls");
@@ -54,7 +55,7 @@ app.get("/", (req, res) => {
   return res.redirect("/login");
 });
 
-//  Login and Logout post routes
+//  Login get and post routes
 app.get("/login", (req, res) => {
   if (req.session.user_id) {
     const user_id = req.session.user_id;
@@ -90,10 +91,14 @@ app.post("/login", (req, res) => {
   }
 });
 
+
+//  Logout post routes
+
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
+
 
 // register route
 app.get("/register", (req, res) => {
@@ -108,10 +113,11 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const user_id = generateRandomID();
+  const user_id = generateRandomID(); 
   let error = null;
   const { id, email, password } = req.body;
   let currentUser = getUserByEmail(email, users);
+
   if (currentUser !== null) {
     res.sendStatus(400).send("Email already exists.");
   } else if (email === "" || password === "") {
@@ -130,7 +136,6 @@ app.post("/register", (req, res) => {
 });
 
 // get routes for /urls to view and change urls
-//  and urls /:id
 app.get("/urls", (req, res) => {
   const user_id = req.session.user_id;
 
@@ -147,14 +152,14 @@ app.get("/urls", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const user_id = req.session.user_id;
-  if (user_id) {
-    const shortURL = generateRandomString();
+  if (user_id) { 
+    const shortURL = generateRandomString(); 
     const longURL = req.body.longURL;
     const user = req.session.user_id;
     urlDatabase[shortURL] = { longURL, userID: user };
     res.redirect(`/urls/${shortURL}`);
   } else {
-    res.status(401).send("Please login in to use tinyApp");
+    res.status(401).send("Please login in to use tinyApp"); // unauthorized code for unauthorized users
   }
 });
 
@@ -173,10 +178,6 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-/** const id = "abc";
- * urlsDatabase[id]  = urlDatabase["abc"];
- * urlsDatabase
- */
 
 app.get("/urls/:id", (req, res) => {
   const user_id = req.session.user_id;
@@ -198,7 +199,12 @@ app.get("/urls/:id", (req, res) => {
 
 app.post("/urls/:id/update", (req, res) => {
   urlDatabase[req.params.id].longURL = req.body.longURL;
+  let user_id = req.session.user_id;
+  if (user_id) {
   res.redirect("/urls");
+  }
+  res.status(401).send("You don't have authorization to view this page.");
+  
 });
 
 app.post("/urls/:id/delete", (req, res) => {
