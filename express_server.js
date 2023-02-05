@@ -91,14 +91,12 @@ app.post("/login", (req, res) => {
   }
 });
 
-
 //  Logout post routes
 
 app.post("/logout", (req, res) => {
   req.session = null;
   res.redirect("/login");
 });
-
 
 // register route
 app.get("/register", (req, res) => {
@@ -113,7 +111,7 @@ app.get("/register", (req, res) => {
 });
 
 app.post("/register", (req, res) => {
-  const user_id = generateRandomID(); 
+  const user_id = generateRandomID();
   let error = null;
   const { id, email, password } = req.body;
   let currentUser = getUserByEmail(email, users);
@@ -146,20 +144,20 @@ app.get("/urls", (req, res) => {
     };
     res.render("urls_index", templateVars);
   } else {
-    res.redirect("/login");
+    res.status(401).send("Please login in to use tinyApp");
   }
 });
 
 app.post("/urls", (req, res) => {
   const user_id = req.session.user_id;
-  if (user_id) { 
-    const shortURL = generateRandomString(); 
+  if (user_id) {
+    const shortURL = generateRandomString();
     const longURL = req.body.longURL;
     const user = req.session.user_id;
     urlDatabase[shortURL] = { longURL, userID: user };
     res.redirect(`/urls/${shortURL}`);
   } else {
-    res.status(401).send("Please login in to use tinyApp"); // unauthorized code for unauthorized users
+    res.status(401).send("Please login in to use tinyApp"); // error code for unauthorized users
   }
 });
 
@@ -178,57 +176,53 @@ app.get("/urls/new", (req, res) => {
   }
 });
 
-
 app.get("/urls/:id", (req, res) => {
   const user_id = req.session.user_id;
-  if (user_id) {
-    if (urlDatabase[req.params.id].userID !== user_id) {
-      res.status(401).send("You don't have authorization to view this page.");
-    }
-    const templateVars = {
-      user: users[user_id],
-      id: req.params.id,
-      shortURL: req.params.id,
-      longURL: urlDatabase[req.params.id].longURL,
-    };
-    res.render("urls_show", templateVars);
-  } else {
-    res.status(401).send("please login in to use tinyApp");
+  if (!user_id) {
+    return res.status(401).send("please login in to use tinyApp");
   }
+  if (!urlDatabase[req.params.id]) {
+    return res.status(401).send("Short url doesn't exist.");
+  }
+  if (urlDatabase[req.params.id].userID !== user_id) {
+    return res
+      .status(401)
+      .send("You don't have authorization to view this page.");
+  }
+  const templateVars = {
+    user: users[user_id],
+    id: req.params.id,
+    shortURL: req.params.id,
+    longURL: urlDatabase[req.params.id].longURL,
+  };
+  res.render("urls_show", templateVars);
 });
 
-app.post("/urls/:id/update", (req, res) => {
+app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id].longURL = req.body.longURL;
   let user_id = req.session.user_id;
   if (user_id) {
-  res.redirect("/urls");
+    res.redirect("/urls");
+  } else {
+    res.status(401).send("You don't have authorization to view this page.");
   }
-  res.status(401).send("You don't have authorization to view this page.");
-  
 });
 
 app.post("/urls/:id/delete", (req, res) => {
   const user_id = req.session.user_id;
-  urlID = req.params.id;
-  const templateVars = {
-    user: users[user_id],
-  };
-
-  if (user_id) {
-    let currentUserUrls = urlsForUser(user_id);
-    if (currentUserUrls) {
-      // if current user urls does exist
-      delete urlDatabase[req.params.id];
-      return res.redirect("/urls");
-    }
-    if (!currentUserUrls) {
-      // if current user's urls doesn't exist
-      return res.status(401).send("This URL is not in your database");
-    }
-    // if neither current user or current user's urls doesn't exist
-    res.status(401).send("please login to delete url");
-    res.redirect("/login");
+  if (!user_id) {
+    return res.status(401).send("please login in to use tinyApp");
   }
+  if (!urlDatabase[req.params.id]) {
+    return res.status(401).send("Short url doesn't exist.");
+  }
+  if (urlDatabase[req.params.id].userID !== user_id) {
+    return res
+      .status(401)
+      .send("You don't have authorization to view this page.");
+  }
+  delete urlDatabase[req.params.id];
+  return res.redirect("/urls");
 });
 
 app.get("/u/:id", (req, res) => {
@@ -239,7 +233,7 @@ app.get("/u/:id", (req, res) => {
     }
     res.redirect(longURL);
   } else {
-    res.status(404).send("Your url could not be found."); //if url for id doesn't exist. 
+    res.status(404).send("Your url could not be found."); //if url for id doesn't exist.
   }
 });
 app.listen(PORT, () => {
